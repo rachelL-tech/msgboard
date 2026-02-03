@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>圖文留言板</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <h1>圖文留言板</h1>
+
+    <form id="form" class="card">
+      文字內容<textarea name="message" placeholder="留言內容" required></textarea>
+      圖片檔案<input name="image" type="file" accept="image/*" />
+      <button>送出</button>
+    </form>
+
+    <section id="list"></section>
+  </main>
+</body>
+</html>
