@@ -14,10 +14,10 @@ function preventXSS(s) {
 async function getPosts() {
   const res = await fetch("/api/posts");
   if (!res.ok) {
-    list.innerHTML = "無法取得貼文";
+    list.innerHTML = `<div class="post">無法取得貼文</div>`;
     return;
   }
-  
+
   const json = await res.json(); // { "data": [ { "id": 1, "message": "...", "image_url": "...", "created_at": "..." }, ... ] }
   list.innerHTML = json.data.map(p => `
     <div class="post">
@@ -30,7 +30,7 @@ async function getPosts() {
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const formData = new FormData(form);
+  const formData = new FormData(form); // 會自動抓取 form 裡的 input, textarea, file 等欄位，並編碼成 multipart/form-data
   const res = await fetch("/api/posts", {
     method: "POST",
     body: formData,
