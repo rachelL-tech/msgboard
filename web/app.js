@@ -82,6 +82,7 @@ form.addEventListener("submit", async (e) => {
       image_key = presignData.key; // 上傳成功後，記下 S3 裡的檔案 key，之後要存到資料庫
     }
 
+    // 圖片（如果有）成功傳到 S3 之後，才呼叫後端 /api/posts 寫入 DB
     const res = await fetch(`${API_BASE}/api/posts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -93,9 +94,9 @@ form.addEventListener("submit", async (e) => {
 
     if (!res.ok) throw new Error(await res.text());
 
-    form.reset();
-    await getPosts();
-  } catch (err) {
+    form.reset(); // 清空表單（文字跟檔案選取都會被清掉）
+    await getPosts(); // 重新拉一次貼文列表，讓剛發的貼文立即出現在畫面
+  } catch (err) { // presign 失敗 / S3 上傳失敗 / 存 DB 失敗
     alert("上傳失敗: " + err.message);
   } finally {
     btn.disabled = false;
