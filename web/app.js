@@ -1,3 +1,5 @@
+const API_BASE = "http://localhost:8000"; // 設定後端 API 的 base URL
+
 const form = document.querySelector("#form");
 const list = document.querySelector("#list");
 
@@ -28,21 +30,77 @@ async function getPosts() {
   `).join("");
 }
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const formData = new FormData(form); // 會自動抓取 form 裡的 input, textarea, file 等欄位，並編碼成 multipart/form-data
-  const res = await fetch("/api/posts", {
+// 向後端要 presign（一次性可用的 S3 上傳資訊）
+async function presign(file) {
+  const res = await fetch(`${API_BASE}/api/presign`, {
     method: "POST",
-    body: formData,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      filename: file.name, // 原始檔名
+      content_type: file.type || "application/octet-stream", // 檔案 MIME，沒有就用通用值
+      size: file.size // 檔案大小（讓後端可以先擋掉超過上限）
+     })
   });
 
-  if (!res.ok) {
-    const txt = await res.text();
-    alert("上傳失敗 " + txt);
-    return;
-  }
-  form.reset();
-  getPosts();
-})
+  if (!res.ok) throw new Error(await res.text()); // S3 還沒設好、憑證沒設
+  
+  return await res.json();
+}
 
+// 把檔案直接上傳到 S3（用 presigned POST，不是presigned PUT）
+async function uploadToS3(presignData, file) {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(presignData.fields)){
+    fd.append(k, v);
+  } // presignData.fields 是 AWS 規定要帶的欄位（含 policy、x-amz-*、key、Content-Type 等），必須全部 append 進去，S3 才會驗證通過。
+  fd.append("file", file); // 最後把檔案本體放到欄位名 "file"
+
+  const r = await fetch(presignData.url, {
+    method: "POST",
+    body: fd
+  });
+
+  if (!r.ok) throw new Error(`上傳到 S3 失敗: ${r.status}`);
+}
+
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const message = form.querySelector("textarea[name=message]").value.trim();
+  const file = form.querySelector("input[name=image]").files[0]; // 因為「type=file」，使用者選完檔案後，瀏覽器會把檔案放在 input.files（FileList）裡，再用[0]取得第一個檔案。file 含檔名、大小、MIME、內容等資訊
+
+  const btn = form.querySelector("button");
+  btn.disabled = true;
+
+  try {
+    let image_key = null;
+
+    if (file) {
+      const presignData = await presign(file); // 向後端要 presign 資訊
+      await uploadToS3(presignData, file); // 拿 presign 的資料把檔案直傳 S3
+      image_key = presignData.key; // 上傳成功後，記下 S3 裡的檔案 key，之後要存到資料庫
+    }
+
+    const res = await fetch(`${API_BASE}/api/posts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        image_key // 如果沒有上傳檔案，image_key 就是 null
+      })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    form.reset();
+    await getPosts();
+  } catch (err) {
+    alert("上傳失敗: " + err.message);
+  } finally {
+    btn.disabled = false;
+  } 
+});
+
+// 頁面載入就先拉一次貼文
 getPosts();
