@@ -46,7 +46,7 @@ def create_presigned_post(filename: str, content_type: str, *, max_bytes: int, e
     post = _s3.generate_presigned_post(
         Bucket=S3_BUCKET, # 指定要上傳到哪個 bucket
         Key=key, # 指定 object key
-        Fields=fields, # 除了上面希望的固定欄位，會混入 AWS 自己需要的 policy、x-amz-* 等
+        Fields=fields, # 除了希望的固定欄位，AWS 會混入自己需要的 policy、x-amz-* 等
         Conditions=conditions,
         ExpiresIn=expires_in, # 這組 presign 資料的有效期限（秒）
     )
@@ -59,7 +59,7 @@ def create_presigned_post(filename: str, content_type: str, *, max_bytes: int, e
         "expires_in": expires_in,
     }
 
-# 輸入一個 object key，回傳一個「暫時可讀取」的 URL（用在 CloudFront 還沒上之前）
+# 輸入一個 object key，回傳一個「暫時可讀取」的 URL（還沒用 CloudFront 的網域來當圖片網址之前，S3 是私有的，瀏覽器拿不到 https://s3.../key 直接看圖，因此要用 presigned GET 給一個「暫時可讀」的 URL 來預覽）
 def create_presigned_get(key: str, *, expires_in: int) -> str:
     if not S3_BUCKET:
         raise RuntimeError("S3_BUCKET is not set")
