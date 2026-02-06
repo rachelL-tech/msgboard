@@ -87,6 +87,8 @@ def create_post(data: PostCreateIn):
         cur.execute("SELECT id, message, image_key, created_at FROM posts WHERE id=%s", (post_id,))
         row = cur.fetchone()
         
+        print(_build_image_url(row.get("image_key")))
+
         return {
             "id": int(row["id"]),
             "message": row["message"],
