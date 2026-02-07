@@ -130,7 +130,7 @@ def list_posts(limit: int = 50):
 def health_check():
     return {"ok": True}
 
-BASE_DIR = Path(__file__).resolve().parents[2] # ./msgboard
-WEB_DIR = BASE_DIR / "web" # ./msgboard/web
+# BASE_DIR = Path(__file__).resolve().parents[2] # ./msgboard
+# WEB_DIR = BASE_DIR / "web" # ./msgboard/web
 
-app.mount("/", StaticFiles(directory=str(WEB_DIR), html=True), name="web") # directory="web"：指定靜態檔資料夾，是相對路徑，會以你啟動 uvicorn 時的工作目錄為基準；html=True：訪問 / 時會回傳 web/index.html
+# app.mount("/", StaticFiles(directory=str(WEB_DIR), html=True), name="web") # directory="web"：指定靜態檔資料夾，是相對路徑，會以你啟動 uvicorn 時的工作目錄為基準；html=True：訪問 / 時會回傳 web/index.html
