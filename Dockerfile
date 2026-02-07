@@ -11,7 +11,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 再複製專案
 COPY backend/ .
-COPY web/ /app/web
 
 EXPOSE 8000
 
