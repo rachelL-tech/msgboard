@@ -5,20 +5,12 @@ version: "3.8"
 
 services:
   app:
-    build:
-      context: . # Docker build 時能讀到哪些檔案
-      dockerfile: Dockerfile
+    image: rachel2037/anonboard:0.2
     env_file:
-      - ./.env
+      - /home/ubuntu/.env
     expose:
       - "8000"
     restart: always
-    command: >
-      uvicorn app.main:app
-      --host 0.0.0.0
-      --port 8000
-      --proxy-headers
-      --forwarded-allow-ips="*"
     networks:
       - webnet
 
