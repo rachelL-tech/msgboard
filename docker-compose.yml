@@ -1,0 +1,38 @@
+# 兩個 services、同一個 network
+# 只 publish nginx 的 80（app 不 publish）
+
+services:
+  app:
+    image: rachel2037/anonboard:0.2
+    env_file:
+      - /home/ubuntu/.env
+    expose:
+      - "8000"
+    restart: always
+    networks:
+      - webnet
+
+  nginx:
+    image: nginx:1.25-alpine # 用官方的 Nginx 映像檔
+    depends_on: # 表示 nginx 會在 app service 之後啟動
+      - app
+    ports: # 把 宿主機（EC2） 的 port 映射到 nginx 容器 的 port
+      - "80:80" # 外面打到 EC2 的 80 → 進到 nginx 容器的 80（HTTP）
+      - "443:443"
+    volumes: # 左邊是主機路徑，右邊是容器路徑
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro # 把專案裡的 nginx 配置檔掛載到容器裡（覆蓋容器內的預設站台設定），:ro 表示 read-only
+      - ./web:/usr/share/nginx/html:ro # 把專案裡的 web 資料夾掛載到 nginx 的靜態檔根目錄
+
+      # Let’s Encrypt 憑證
+      - /etc/letsencrypt:/etc/letsencrypt:ro # 把 EC2 上的憑證資料夾掛載到 nginx 容器裡，讓 nginx 能讀取憑證檔案，在 default.conf 裡用
+
+      # HTTP-01 challenge webroot
+      - ./certbot/www:/var/www/certbot:ro # 把專案裡的 certbot/www 資料夾（內含驗證檔）掛載到 nginx 容器裡，讓 nginx 能提供 HTTP-01 驗證檔案；nginx 要有一段規則把 /.well-known/acme-challenge/ 這種路徑指到 /var/www/certbot，讓 Let’s Encrypt 從外網用 HTTP(80) 抓得到那個檔案
+      
+    restart: always
+    networks:
+      - webnet
+
+networks:
+  webnet:
+    driver: bridge

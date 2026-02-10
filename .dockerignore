@@ -1,6 +1,16 @@
-.env
-__pycache__/
-*.pyc
 .git/
-.vscode/
+**/__pycache__/
+**/*.pyc
 .DS_Store
+
+# secrets / local env
+.env
+*.pem
+
+# 前端/NGINX 不需要進 app image
+web/
+nginx/
+
+node_modules/
+dist/
+.vscode/
